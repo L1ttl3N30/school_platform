@@ -1,0 +1,39 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Import Attendance
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Import Attendance Excel
+</h1>
+
+<div class="card">
+
+    <div class="card-body">
+
+        <form
+            method="post"
+            enctype="multipart/form-data"
+        >
+
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Import Excel
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

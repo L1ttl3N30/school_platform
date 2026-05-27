@@ -1,0 +1,52 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Student Signup
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-md-6">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body">
+
+                <h2 class="mb-4">
+                    Student Registration
+                </h2>
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    {{ form.as_p }}
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                    >
+                        Create Account
+                    </button>
+
+                </form>
+
+                <div class="mt-3 text-center">
+
+                    <a href="{% url 'login' %}">
+                        Already have an account?
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

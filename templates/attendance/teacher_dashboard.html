@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Attendance
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Attendance Dashboard
+</h1>
+
+<div class="row">
+
+    {% for class in classes %}
+
+        <div class="col-md-4 mb-4">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <h5>
+                        {{ class.name }}
+                    </h5>
+
+                    <a
+                        href="{% url 'class_attendance' class.id %}"
+                        class="btn btn-primary"
+                    >
+                        Open Attendance
+                    </a>
+                    <a
+                        href="{% url 'monthly_attendance_grid' class.id %}"
+                        class="btn btn-success mt-2"
+                    >
+                        Monthly Grid
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base/base.html" %}
+{% load core_tags %}
+{% block title %}
+Monthly Attendance
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    {{ school_class.name }}
+    Monthly Attendance
+</h1>
+
+<div class="mb-4">
+
+    <form method="get">
+
+        <div class="row">
+
+            <div class="col-md-2">
+
+                <input
+                    type="number"
+                    name="month"
+                    class="form-control"
+                    value="{{ month }}"
+                    min="1"
+                    max="12"
+                >
+
+            </div>
+
+            <div class="col-md-2">
+
+                <input
+                    type="number"
+                    name="year"
+                    class="form-control"
+                    value="{{ year }}"
+                >
+
+            </div>
+
+            <div class="col-md-2">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Load
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-bordered table-sm">
+
+    <thead>
+
+        <tr>
+
+            <th>
+                Student
+            </th>
+
+            {% for day in days %}
+
+                <th>
+                    {{ day }}
+                </th>
+
+            {% endfor %}
+
+            <th>
+                Total
+            </th>
+
+            <th>
+                QR
+            </th>
+
+            <th>
+                Paid
+            </th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for row in student_rows %}
+
+            <tr>
+
+                <td>
+                    {{ row.student.full_name }}
+                </td>
+
+                {% for day in days %}
+                    <td>
+
+                        <form
+                            method="post"
+                            action="{% url 'toggle_attendance' school_class.id row.student.id year month day %}"
+                        >
+
+                            {% csrf_token %}
+
+                            {% if row.attendance_map|get_item:day == "PRESENT" %}
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-success btn-sm"
+                                >
+                                    ✓
+                                </button>
+
+                            {% else %}
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-outline-secondary btn-sm"
+                                >
+                                    -
+                                </button>
+
+                            {% endif %}
+
+                        </form>
+
+                    </td>
+
+                {% endfor %}
+
+                <td>
+                    {{ row.total_present }}
+                </td>
+
+                <td>
+
+                    <img
+                        src="data:image/png;base64,{{ row.qr_code }}"
+                        width="80"
+                    >
+
+                </td>
+                <td>
+
+                    <form
+                        method="post"
+                        action="{% url 'toggle_payment_status' row.payment.id %}"
+                    >
+
+                        {% csrf_token %}
+
+                        {% if row.payment.status == "PAID" %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-success btn-sm"
+                            >
+                                ✓
+                            </button>
+
+                        {% else %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-outline-danger btn-sm"
+                            >
+                                ✗
+                            </button>
+
+                        {% endif %}
+
+                    </form>
+
+                </td>
+                
+            </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

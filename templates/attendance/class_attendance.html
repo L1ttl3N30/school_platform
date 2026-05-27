@@ -1,0 +1,102 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Class Attendance
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    {{ school_class.name }}
+    Attendance
+</h1>
+
+<p>
+    Date:
+    {{ today }}
+</p>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Student
+                </th>
+
+                <th>
+                    Status
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for enrollment in enrollments %}
+
+                <tr>
+
+                    <td>
+                        {{ enrollment.student.full_name }}
+                    </td>
+
+                    <td>
+
+                        <select
+                            name="status_{{ enrollment.student.id }}"
+                            class="form-select"
+                        >
+
+                            {% load core_tags %}
+
+                            {% for value, label in statuses %}
+
+                            <option
+                                value="{{ value }}"
+
+                                {% if attendance_map|get_item:enrollment.student.id %}
+
+                                    {% if attendance_map|get_item:enrollment.student.id.status == value %}
+                                        selected
+                                    {% endif %}
+
+                                {% endif %}
+                            >
+
+                                {{ label }}
+
+                            </option>
+
+                            {% endfor %}
+
+
+                        </select>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+        Save Attendance
+    </button>
+
+</form>
+
+{% endblock %}

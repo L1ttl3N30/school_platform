@@ -1,0 +1,108 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Rankings
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Rankings Dashboard
+</h1>
+
+<div class="card mb-5">
+
+    <div class="card-body">
+
+        <h4 class="mb-4">
+            Paste Scores
+        </h4>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Generate Rankings
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<h3 class="mb-3">
+    Leaderboard
+</h3>
+
+<table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+
+            <th>
+                Rank
+            </th>
+
+            <th>
+                Student
+            </th>
+
+            <th>
+                Class
+            </th>
+
+            <th>
+                Average
+            </th>
+
+            <th>
+                Month
+            </th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for row in leaderboard %}
+
+            <tr>
+
+                <td>
+                    {{ row.rank_position }}
+                </td>
+
+                <td>
+                    {{ row.student.full_name }}
+                </td>
+
+                <td>
+                    {{ row.school_class.name }}
+                </td>
+
+                <td>
+                    {{ row.average_score }}
+                </td>
+
+                <td>
+                    {{ row.ranking_month }}
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+from apps.accounts.models import User
+
+from apps.attendance.models import AttendanceRecord
+from apps.classes.models import Enrollment
+from apps.payments.models import TuitionPayment
+from apps.rankings.models import (
+    StudentScore,
+    MonthlyRanking,
+)
+
+AttendanceRecord.objects.all().delete()
+
+Enrollment.objects.all().delete()
+
+TuitionPayment.objects.all().delete()
+
+StudentScore.objects.all().delete()
+
+MonthlyRanking.objects.all().delete()
+
+User.objects.filter(
+    role="STUDENT"
+).delete()
+
+
+
+###clear related table
+from apps.attendance.models import AttendanceRecord
+from apps.classes.models import Enrollment
+from apps.payments.models import TuitionPayment
+from apps.rankings.models import (
+    StudentScore,
+    MonthlyRanking,
+)
+
+AttendanceRecord.objects.all().delete()
+Enrollment.objects.all().delete()
+TuitionPayment.objects.all().delete()
+StudentScore.objects.all().delete()
+MonthlyRanking.objects.all().delete()
+
+###nuke reset
+from apps.accounts.models import User
+
+User.objects.exclude(
+    is_superuser=True
+).delete()
+
+
+###verify reset
+User.objects.filter(
+    role="STUDENT"
+).count()
+
+###do not use: python manage.py flush -> delete admin accounts

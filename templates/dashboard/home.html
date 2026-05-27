@@ -1,0 +1,102 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Dashboard
+</h1>
+
+<div class="row">
+
+    <div class="col-md-4 mb-4">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body">
+
+                <h5>
+                    Attendance
+                </h5>
+
+                <p>
+                    Manage attendance records.
+                </p>
+
+                <a
+                    href="/attendance/"
+                    class="btn btn-primary"
+                >
+                    Open
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4 mb-4">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body">
+
+                <h5>
+                    Rankings
+                </h5>
+
+                <p>
+                    Manage student rankings.
+                </p>
+
+                <a
+                    href="/rankings/"
+                    class="btn btn-success"
+                >
+                    Open
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% if request.user.role == "ADMIN" or request.user.role == "TEACHER" %}
+
+    <div class="col-md-4 mb-4">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body">
+
+                <h5>
+                    Payments
+                </h5>
+
+                <p>
+                    Upload bank statements.
+                </p>
+
+                <a
+                    href="/payments/upload/"
+                    class="btn btn-warning"
+                >
+                    Open
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
