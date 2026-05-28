@@ -3,7 +3,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.contrib import admin
-
+from django.urls import (
+    include,
+    path,
+)
 admin.site.site_header = (
     "School Platform Admin"
 )
@@ -47,6 +50,11 @@ path(
     "rankings/",
     include("apps.rankings.urls"),
 ),
+path(
+    "classes/",
+    include("apps.classes.urls"),
+),
+
 
 ]
 

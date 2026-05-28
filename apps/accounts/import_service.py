@@ -6,7 +6,9 @@ from unidecode import unidecode
 from apps.classes.models import (
     Enrollment,
 )
-
+from .services import (
+    StudentReferenceService,
+)
 from .models import User
 
 
@@ -125,24 +127,46 @@ class StudentImportService:
                     full_name__iexact=full_name,
                 ).first()
             )
-
             # DUPLICATE
             if existing_student:
 
                 issues.append(
                     (
                         f"Row {row}: "
-                        f"existing student "
-                        f"'{full_name}'"
+                        f"duplicate student -> "
+                        f"Excel='{full_name}' | "
+                        f"DB='{existing_student.full_name}' | "
+                        f"username='{existing_student.username}' | "
+                        f"reference='{existing_student.reference_number}'"
                     )
+                )
+
+                print(
+                    "DUPLICATE:",
+                    {
+                        "row": row,
+                        "excel_name": full_name,
+                        "db_name": existing_student.full_name,
+                        "username": existing_student.username,
+                        "reference": existing_student.reference_number,
+                    }
                 )
 
                 skipped_count += 1
                 continue
-
+            
             username = (
                 StudentImportService.generate_username(
                     full_name
+                )
+            )
+            next_number = (
+                StudentReferenceService.get_next_number()
+            )
+
+            reference_number = (
+                StudentReferenceService.generate_reference_number(
+                    next_number
                 )
             )
 
@@ -151,6 +175,7 @@ class StudentImportService:
                 password=default_password,
                 full_name=full_name,
                 role=User.Role.STUDENT,
+                reference_number=reference_number,
             )
 
             Enrollment.objects.create(

@@ -1,101 +1,220 @@
 {% extends "base/base.html" %}
 
+{% load core_tags %}
+
 {% block title %}
 Class Attendance
 {% endblock %}
 
 {% block content %}
 
-<h1 class="mb-4">
-    {{ school_class.name }}
-    Attendance
-</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
 
-<p>
-    Date:
-    {{ today }}
-</p>
+    <div>
+
+        <h1 class="mb-1">
+            {{ school_class.name }}
+            Attendance
+        </h1>
+
+        <p class="text-muted mb-0">
+            Date:
+            {{ today }}
+        </p>
+
+    </div>
+
+    <div>
+
+        <a
+            href="{% url 'monthly_attendance_grid' school_class.id %}"
+            class="btn btn-outline-primary"
+        >
+            Monthly Grid
+        </a>
+
+    </div>
+
+</div>
 
 <form method="post">
 
     {% csrf_token %}
 
-    <table class="table table-bordered">
+    <div class="card shadow-sm">
 
-        <thead>
+        <div class="card-body p-0">
 
-            <tr>
+            <table class="table table-bordered table-hover align-middle mb-0">
 
-                <th>
-                    Student
-                </th>
+                <thead class="table-light">
 
-                <th>
-                    Status
-                </th>
+                    <tr>
 
-            </tr>
+                        <th style="width: 28%;">
+                            Student
+                        </th>
 
-        </thead>
+                        <th style="width: 18%;">
+                            Username
+                        </th>
 
-        <tbody>
+                        <th style="width: 18%;">
+                            Reference
+                        </th>
 
-            {% for enrollment in enrollments %}
+                        <th style="width: 18%;">
+                            Status
+                        </th>
 
-                <tr>
+                        <th style="width: 18%;">
+                            Actions
+                        </th>
 
-                    <td>
-                        {{ enrollment.student.full_name }}
-                    </td>
+                    </tr>
 
-                    <td>
+                </thead>
 
-                        <select
-                            name="status_{{ enrollment.student.id }}"
-                            class="form-select"
-                        >
+                <tbody>
 
-                            {% load core_tags %}
+                    {% for enrollment in enrollments %}
 
-                            {% for value, label in statuses %}
+                        <tr>
 
-                            <option
-                                value="{{ value }}"
+                            <td>
 
-                                {% if attendance_map|get_item:enrollment.student.id %}
+                                <strong>
+                                    {{ enrollment.student.full_name }}
+                                </strong>
 
-                                    {% if attendance_map|get_item:enrollment.student.id.status == value %}
-                                        selected
-                                    {% endif %}
+                            </td>
+
+                            <td>
+
+                                <code>
+                                    {{ enrollment.student.username }}
+                                </code>
+
+                            </td>
+
+                            <td>
+
+                                {% if enrollment.student.reference_number %}
+
+                                    <span class="badge bg-secondary">
+
+                                        {{ enrollment.student.reference_number }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        No Reference
+                                    </span>
 
                                 {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <select
+                                    name="status_{{ enrollment.student.id }}"
+                                    class="form-select"
+                                >
+
+                                    {% for value, label in statuses %}
+
+                                        <option
+                                            value="{{ value }}"
+
+                                            {% if attendance_map|get_item:enrollment.student.id %}
+
+                                                {% if attendance_map|get_item:enrollment.student.id.status == value %}
+                                                    selected
+                                                {% endif %}
+
+                                            {% endif %}
+                                        >
+
+                                            {{ label }}
+
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </td>
+
+                            <td>
+
+                                <div class="d-flex flex-wrap gap-2">
+
+                                    <a
+                                        href="{% url 'move_student_to_class' enrollment.id %}"
+                                        class="btn btn-sm btn-warning"
+                                    >
+                                        Move
+                                    </a>
+
+                                    <a
+                                        href="{% url 'remove_student_from_class' enrollment.id %}"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Remove student from class?')"
+                                    >
+                                        Remove
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="text-center py-4"
                             >
 
-                                {{ label }}
+                                No students enrolled.
 
-                            </option>
+                            </td>
 
-                            {% endfor %}
+                        </tr>
 
+                    {% endfor %}
 
-                        </select>
+                </tbody>
 
-                    </td>
+            </table>
 
-                </tr>
+        </div>
 
-            {% endfor %}
+    </div>
 
-        </tbody>
+    <div class="mt-4 d-flex gap-2">
 
-    </table>
+        <button
+            type="submit"
+            class="btn btn-success"
+        >
+            Save Attendance
+        </button>
 
-    <button
-        type="submit"
-        class="btn btn-success"
-    >
-        Save Attendance
-    </button>
+        <a
+            href="{% url 'attendance_dashboard' %}"
+            class="btn btn-secondary"
+        >
+            Back
+        </a>
+
+    </div>
 
 </form>
 

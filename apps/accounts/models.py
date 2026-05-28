@@ -15,6 +15,13 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+    reference_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
 
     class Role(models.TextChoices):
         ADMIN = "ADMIN", _("Admin")
@@ -46,9 +53,11 @@ class User(AbstractUser):
     )
 
 
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         ordering = ["username"]

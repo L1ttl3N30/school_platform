@@ -23,6 +23,11 @@ User.objects.filter(
 ).delete()
 
 
+###delete broken payments
+from apps.payments.models import TuitionPayment
+
+TuitionPayment.objects.all().delete()
+
 
 ###clear related table
 from apps.attendance.models import AttendanceRecord

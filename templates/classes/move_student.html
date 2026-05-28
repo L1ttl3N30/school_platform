@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Move Student
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Move Student
+</h1>
+
+<div class="card">
+
+    <div class="card-body">
+
+        <p>
+            Student:
+            <strong>
+                {{ enrollment.student.full_name }}
+            </strong>
+        </p>
+
+        <p>
+            Current Class:
+            <strong>
+                {{ enrollment.school_class.name }}
+            </strong>
+        </p>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Move Student
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

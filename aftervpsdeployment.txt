@@ -1,0 +1,216 @@
+PHASE 8 IMPLEMENTATION ORDER
+
+We do this properly:
+
+Install Redis
+Install Celery
+Configure Django
+Create async tasks
+Refactor imports
+Add task status
+Add scheduled jobs
+STEP 1 — INSTALL REDIS (LOCAL)
+WINDOWS OPTION (BEST)
+
+Use Docker Desktop.
+
+Run:
+
+docker run -d -p 6379:6379 redis
+VERIFY
+
+Run:
+
+docker ps
+
+Should show:
+
+redis container running.
+STEP 2 — INSTALL PACKAGES
+
+Run:
+
+pip install celery redis django-celery-results
+STEP 3 — UPDATE INSTALLED_APPS
+config/settings/base.py
+
+Add:
+
+"django_celery_results",
+STEP 4 — CELERY CONFIG
+config/settings/base.py
+
+Add at bottom:
+
+CELERY_BROKER_URL = (
+    "redis://127.0.0.1:6379/0"
+)
+
+CELERY_RESULT_BACKEND = (
+    "django-db"
+)
+
+CELERY_ACCEPT_CONTENT = [
+    "json",
+]
+
+CELERY_TASK_SERIALIZER = (
+    "json"
+)
+
+CELERY_RESULT_SERIALIZER = (
+    "json"
+)
+
+CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
+STEP 5 — MIGRATE CELERY RESULTS
+
+Run:
+
+python manage.py migrate django_celery_results
+STEP 6 — CREATE CELERY APP
+config/celery.py
+
+Create:
+
+import os
+
+from celery import Celery
+
+
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE",
+    "config.settings.development",
+)
+
+app = Celery(
+    "config"
+)
+
+app.config_from_object(
+    "django.conf:settings",
+    namespace="CELERY",
+)
+
+app.autodiscover_tasks()
+STEP 7 — UPDATE config/init.py
+config/init.py
+
+Add:
+
+from .celery import app as celery_app
+
+__all__ = ("celery_app",)
+STEP 8 — CREATE FIRST TASK
+apps/payments/tasks.py
+
+Create:
+
+from celery import shared_task
+
+from .reconciliation_service import (
+    BankReconciliationService,
+)
+
+
+@shared_task
+def reconcile_bank_statement_task(
+    file_path,
+):
+
+    with open(
+        file_path,
+        "rb",
+    ) as file:
+
+        result = (
+            BankReconciliationService.process_file(
+                uploaded_file=file
+            )
+        )
+
+    return result
+WHY FILE PATH?
+
+Celery workers:
+
+run separately
+cannot access request memory.
+
+This is VERY important architecture knowledge.
+
+STEP 9 — UPDATE PAYMENT VIEW
+apps/payments/views.py
+
+Replace synchronous reconciliation:
+
+result = (
+    BankReconciliationService.process_file(
+
+WITH:
+
+from .tasks import (
+    reconcile_bank_statement_task,
+)
+
+Then:
+
+import tempfile
+
+Inside POST:
+
+temp_file = tempfile.NamedTemporaryFile(
+    delete=False,
+)
+
+for chunk in request.FILES["file"].chunks():
+
+    temp_file.write(chunk)
+
+temp_file.close()
+
+reconcile_bank_statement_task.delay(
+    temp_file.name
+)
+THEN REPLACE SUCCESS MESSAGE
+
+WITH:
+
+messages.success(
+    request,
+    (
+        "Bank reconciliation task "
+        "started successfully."
+    ),
+)
+STEP 10 — START CELERY WORKER
+
+Open NEW terminal:
+
+celery -A config worker -l info
+IMPORTANT
+
+Now:
+
+Django runs separately
+Celery worker runs separately
+
+This is REAL production architecture.
+
+STEP 11 — VERIFY
+
+Upload bank statement.
+
+You should see in worker:
+
+Task apps.payments.tasks...
+HUGE NEXT BENEFITS
+
+Now you can async:
+
+Feature	Huge Gain
+Attendance import	No freezing
+Rankings	Background compute
+Monthly resets	Scheduled
+Emails	Async
+Notifications	Async

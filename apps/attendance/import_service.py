@@ -1,8 +1,12 @@
+from calendar import monthrange
 from datetime import date
 
 import openpyxl
 
 from apps.accounts.models import User
+from apps.core.utils import (
+    normalize_vietnamese_text,
+)
 
 from .models import (
     AttendanceRecord,
@@ -12,8 +16,44 @@ from .models import (
 
 class AttendanceImportService:
 
-    @staticmethod
+    START_DAY_COLUMN = 3
+    END_DAY_COLUMN = 33
+
+    @classmethod
+    def find_student(
+        cls,
+        student_name,
+    ):
+
+        normalized_excel_name = (
+            normalize_vietnamese_text(
+                student_name
+            )
+        )
+
+        students = User.objects.filter(
+            role=User.Role.STUDENT
+        )
+
+        for student in students:
+
+            normalized_db_name = (
+                normalize_vietnamese_text(
+                    student.full_name
+                )
+            )
+
+            if (
+                normalized_db_name
+                == normalized_excel_name
+            ):
+                return student
+
+        return None
+
+    @classmethod
     def import_excel(
+        cls,
         *,
         excel_file,
         school_class,
@@ -31,14 +71,17 @@ class AttendanceImportService:
         imported_count = 0
         skipped_count = 0
 
-        # DAY COLUMNS:
-        # C = 3
-        # AG = 33
+        unmatched_students = []
 
-        START_DAY_COLUMN = 3
-        END_DAY_COLUMN = 33
+        max_days = monthrange(
+            year,
+            month,
+        )[1]
 
-        for row in range(3, sheet.max_row + 1):
+        for row in range(
+            3,
+            sheet.max_row + 1,
+        ):
 
             student_name = (
                 sheet.cell(
@@ -49,45 +92,49 @@ class AttendanceImportService:
 
             if not student_name:
 
+                skipped_count += 1
+
+                unmatched_students.append(
+                    f"Row {row}: empty name"
+                )
+
                 continue
 
+            student_name = str(
+                student_name
+            ).strip()
 
-            student_name = (
-                str(student_name)
-                .replace("\xa0", " ")
-                .strip()
-            )
-
-            print(
-                "EXCEL NAME:",
-                repr(student_name)
-            )
-
-            student = (
-                User.objects.filter(
-                    full_name__icontains=student_name
-                ).first()
-            )
-            print(
-                "MATCHED:",
-                student
+            student = cls.find_student(
+                student_name
             )
 
             if not student:
 
                 skipped_count += 1
+
+                unmatched_students.append(
+                    (
+                        f"Row {row}: "
+                        f"student not found -> "
+                        f"{student_name}"
+                    )
+                )
+
                 continue
 
             for column in range(
-                START_DAY_COLUMN,
-                END_DAY_COLUMN + 1,
+                cls.START_DAY_COLUMN,
+                cls.END_DAY_COLUMN + 1,
             ):
 
                 day = (
                     column
-                    - START_DAY_COLUMN
+                    - cls.START_DAY_COLUMN
                     + 1
                 )
+
+                if day > max_days:
+                    continue
 
                 cell_value = (
                     sheet.cell(
@@ -96,8 +143,10 @@ class AttendanceImportService:
                     ).value
                 )
 
-                if str(cell_value).strip() != "1":
-
+                if (
+                    str(cell_value).strip()
+                    != "1"
+                ):
                     continue
 
                 attendance_date = date(
@@ -123,4 +172,5 @@ class AttendanceImportService:
         return {
             "imported_count": imported_count,
             "skipped_count": skipped_count,
+            "unmatched_students": unmatched_students,
         }

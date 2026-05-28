@@ -1,0 +1,189 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Payments Dashboard
+{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    Payments Dashboard
+</h1>
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card p-3">
+
+            <h5>
+                Total Payments
+            </h5>
+
+            <h2>
+                {{ total_payments }}
+            </h2>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card p-3">
+
+            <h5>
+                Paid
+            </h5>
+
+            <h2>
+                {{ paid_count }}
+            </h2>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card p-3">
+
+            <h5>
+                Unpaid
+            </h5>
+
+            <h2>
+                {{ unpaid_count }}
+            </h2>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card p-3">
+
+            <h5>
+                Revenue
+            </h5>
+
+            <h2>
+                {{ total_collected }}
+            </h2>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <div class="card p-3 mb-4">
+
+            <h4 class="mb-3">
+                Recent Payments
+            </h4>
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Amount
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for payment in recent_payments %}
+
+                    <tr>
+
+                        <td>
+                            {{ payment.student.full_name }}
+                        </td>
+
+                        <td>
+                            {{ payment.amount }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <div class="card p-3">
+
+            <h4 class="mb-3">
+                Unpaid Students
+            </h4>
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Amount
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for payment in unpaid_payments %}
+
+                    <tr>
+
+                        <td>
+                            {{ payment.student.full_name }}
+                        </td>
+
+                        <td>
+                            {{ payment.amount }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

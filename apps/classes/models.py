@@ -15,12 +15,15 @@ class AcademicYear(TimeStampedModel):
 
     end_date = models.DateField()
 
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(
+        default=True
+    )
 
     class Meta:
         ordering = ["-start_date"]
 
     def __str__(self):
+
         return self.name
 
 
@@ -53,27 +56,26 @@ class SchoolClass(TimeStampedModel):
         related_name="teaching_classes",
     )
 
-    is_active = models.BooleanField(default=True)
+    lesson_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=settings.DEFAULT_LESSON_FEE,
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
+
         return self.name
 
 
 class Enrollment(TimeStampedModel):
-    def clean(self):
 
-        if self.student.role != "STUDENT":
-
-            from django.core.exceptions import (
-                ValidationError
-            )
-
-            raise ValidationError(
-                "Only students can enroll."
-            )
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -93,7 +95,9 @@ class Enrollment(TimeStampedModel):
         auto_now_add=True
     )
 
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(
+        default=True
+    )
 
     class Meta:
         unique_together = (
@@ -101,7 +105,20 @@ class Enrollment(TimeStampedModel):
             "school_class",
         )
 
+    def clean(self):
+
+        if self.student.role != "STUDENT":
+
+            from django.core.exceptions import (
+                ValidationError
+            )
+
+            raise ValidationError(
+                "Only students can enroll."
+            )
+
     def __str__(self):
+
         return (
             f"{self.student.username} "
             f"-> "

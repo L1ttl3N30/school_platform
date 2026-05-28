@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
@@ -10,9 +11,11 @@
     >
 
     <title>
+
         {% block title %}
             School Platform
         {% endblock %}
+
     </title>
 
     <link
@@ -20,59 +23,177 @@
         rel="stylesheet"
     >
 
+    <style>
+
+        body {
+            background-color: #f5f6fa;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background-color: #212529;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .sidebar a:hover {
+            background-color: #343a40;
+        }
+
+        .main-content {
+            padding: 24px;
+        }
+
+    </style>
+
 </head>
+
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<div class="container-fluid">
 
-    <div class="container">
+    <div class="row">
 
-        <a class="navbar-brand" href="/">
-            School Platform
-        </a>
+        {% if request.user.is_authenticated %}
 
-        <div class="ms-auto">
+        <div class="col-md-2 sidebar p-3">
 
-            {% if request.user.is_authenticated %}
+            <h4 class="text-light mb-4">
+                School Platform
+            </h4>
 
-                <span class="text-light me-3">
-                    {{ request.user.username }}
-                </span>
-                <a
-                    href="{% url 'upload_payment_file' %}"
-                    class="btn btn-warning btn-sm me-2"
-                >
+            <a href="/">
+                Dashboard
+            </a>
+
+            <a href="/attendance/">
+                Attendance
+            </a>
+            <a href="/attendance/import/">
+                Import Attendance
+            </a>
+            <a href="/accounts/import-students/">
+                Import Students
+            </a>
+            <a href="/rankings/">
+                Rankings
+            </a>
+
+            {% if request.user.role == "ADMIN" or request.user.role == "TEACHER" %}
+
+                <div class="text-uppercase text-secondary small mt-3 mb-2 px-2">
                     Payments
+                </div>
+                <a href="/payments/">
+                    Payments Dashboard
+                </a>
+                <a href="/payments/upload/">
+                    Upload Payments
                 </a>
 
-                <a
-                    href="{% url 'ranking_dashboard' %}"
-                    class="btn btn-info btn-sm me-2"
-                >
-                    Rankings
-                </a>
-                
-                <a
-                    href="{% url 'logout' %}"
-                    class="btn btn-outline-light btn-sm"
-                >
-                    Logout
+                <!-- <a href="/payments/reconcile/">
+                    Bank Reconciliation
+                </a> -->
+
+            {% endif %}
+
+
+            {% if request.user.is_superuser %}
+
+                <a href="/admin/">
+                    Admin
                 </a>
 
             {% endif %}
+
+            <hr class="text-light">
+
+            <div class="text-light mb-3">
+
+                <strong>
+                    {{ request.user.username }}
+                </strong>
+
+                <br>
+
+                {{ request.user.role }}
+
+            </div>
+
+            <form
+                method="post"
+                action="{% url 'logout' %}"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-link text-decoration-none text-light p-0"
+                    style="text-align:left;"
+                >
+                    Logout
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="col-md-10 main-content">
+
+        {% else %}
+
+        <div class="col-md-12 main-content">
+
+            <div class="d-flex justify-content-end mb-4">
+
+                <a
+                    href="{% url 'login' %}"
+                    class="btn btn-outline-primary me-2"
+                >
+                    Login
+                </a>
+
+                <a
+                    href="{% url 'student_signup' %}"
+                    class="btn btn-primary"
+                >
+                    Student Signup
+                </a>
+
+            </div>
+
+        {% endif %}
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    <div class="alert alert-{{ message.tags }}">
+
+                        {{ message }}
+
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
 
         </div>
 
     </div>
 
-</nav>
-
-<div class="container mt-4">
-
-    {% block content %}
-    {% endblock %}
-
 </div>
 
 </body>
+
 </html>

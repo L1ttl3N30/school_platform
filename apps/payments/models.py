@@ -166,3 +166,35 @@ class ImportedTransaction(TimeStampedModel):
     def __str__(self):
 
         return self.description
+    
+class BankTransactionImport(
+    TimeStampedModel,
+):
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    original_file = models.FileField(
+        upload_to="bank_imports/",
+    )
+
+    imported_count = models.IntegerField(
+        default=0,
+    )
+
+    matched_count = models.IntegerField(
+        default=0,
+    )
+
+    failed_count = models.IntegerField(
+        default=0,
+    )
+
+    class Meta:
+
+        ordering = [
+            "-created_at",
+        ]

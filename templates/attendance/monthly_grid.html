@@ -10,6 +10,12 @@ Monthly Attendance
     {{ school_class.name }}
     Monthly Attendance
 </h1>
+<a
+    href="{% url 'generate_class_payments' school_class.id %}?month={{ month }}&year={{ year }}"
+    class="btn btn-success mb-3"
+>
+    Generate Payments
+</a>
 
 <div class="mb-4">
 
@@ -55,6 +61,49 @@ Monthly Attendance
         </div>
 
     </form>
+
+</div>
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="row align-items-end">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Lesson Fee
+                    </label>
+
+                    <input
+                        type="number"
+                        name="lesson_fee"
+                        class="form-control"
+                        value="{{ school_class.lesson_fee }}"
+                    >
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Update Fee
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
@@ -145,12 +194,10 @@ Monthly Attendance
                 </td>
 
                 <td>
-
                     <img
-                        src="data:image/png;base64,{{ row.qr_code }}"
-                        width="80"
-                    >
-
+                        src="{{ row.qr_code }}"
+                        width="120"
+                    />
                 </td>
                 <td>
 

@@ -1,38 +1,47 @@
-import base64
-from io import BytesIO
+from urllib.parse import quote
 
-import qrcode
+from django.conf import settings
 
 
 class QRCodeService:
 
-    @staticmethod
-    def generate_base64_qr(data):
+    BASE_URL = (
+        "https://img.vietqr.io/image"
+    )
 
-        qr = qrcode.QRCode(
-            version=1,
-            box_size=4,
-            border=2,
+    @classmethod
+    def generate_vietqr_url(
+        cls,
+        *,
+        payment,
+    ):
+
+        bank_bin = (
+            settings.BANK_BIN
         )
 
-        qr.add_data(data)
-
-        qr.make(fit=True)
-
-        image = qr.make_image(
-            fill_color="black",
-            back_color="white",
+        account_number = (
+            settings.BANK_ACCOUNT_NUMBER
         )
 
-        buffer = BytesIO()
-
-        image.save(
-            buffer,
-            format="PNG",
+        amount = int(
+            payment.amount
         )
 
-        qr_base64 = base64.b64encode(
-            buffer.getvalue()
-        ).decode()
+        description = quote(
+            payment.payment_reference
+        )
 
-        return qr_base64
+        account_name = quote(
+            settings.BANK_ACCOUNT_NAME
+        )
+
+        return (
+            f"{cls.BASE_URL}/"
+            f"{bank_bin}-"
+            f"{account_number}"
+            f"-compact2.png"
+            f"?amount={amount}"
+            f"&addInfo={description}"
+            f"&accountName={account_name}"
+        )

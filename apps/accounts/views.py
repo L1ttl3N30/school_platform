@@ -1,29 +1,29 @@
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.decorators import (
+    login_required,
+)
 from django.shortcuts import (
     redirect,
     render,
 )
 
-from .forms import (
-    StudentSignupForm,
-)
-from django.contrib.auth.decorators import (
-    login_required,
-)
-
 from apps.core.decorators import (
     role_required,
 )
+
 from .forms import (
     StudentImportForm,
+    StudentSignupForm,
 )
 from .import_service import (
     StudentImportService,
 )
+
+
 def student_signup(request):
 
-    if request.user.is_authenticated:
+    if request.user.is_authenticated():
 
         return redirect("/")
 
@@ -41,40 +41,12 @@ def student_signup(request):
                 request,
                 user,
             )
+
             messages.success(
                 request,
-                (
-                    f"Created "
-                    f"{result['created_count']} "
-                    f"students. "
-                    f"Skipped "
-                    f"{result['skipped_count']}."
-                ),
-            )
-            MAX_DISPLAYED_ISSUES = 20
-
-            for issue in result["issues"][
-                :MAX_DISPLAYED_ISSUES
-            ]:
-
-                messages.warning(
-                    request,
-                    issue,
-                )
-
-            remaining = (
-                len(result["issues"])
-                - MAX_DISPLAYED_ISSUES
+                "Account created successfully.",
             )
 
-            if remaining > 0:
-
-                messages.warning(
-                    request,
-                    (
-                        f"And {remaining} more issues..."
-                    ),
-                )
             return redirect("/")
 
     else:
@@ -90,6 +62,7 @@ def student_signup(request):
         "accounts/signup.html",
         context,
     )
+
 
 @login_required
 @role_required([
@@ -120,6 +93,7 @@ def import_students(request):
                     ],
                 )
             )
+
             print(result)
 
             messages.success(
@@ -129,9 +103,35 @@ def import_students(request):
                     f"{result['created_count']} "
                     f"students. "
                     f"Skipped "
-                    f"{result['skipped_count']} existing students."
+                    f"{result['skipped_count']} students."
                 ),
             )
+
+            MAX_DISPLAYED_ISSUES = 20
+
+            for issue in result["issues"][
+                :MAX_DISPLAYED_ISSUES
+            ]:
+
+                messages.warning(
+                    request,
+                    issue,
+                )
+
+            remaining = (
+                len(result["issues"])
+                - MAX_DISPLAYED_ISSUES
+            )
+
+            if remaining > 0:
+
+                messages.warning(
+                    request,
+                    (
+                        f"And {remaining} "
+                        f"more issues..."
+                    ),
+                )
 
             return redirect(
                 "import_students"

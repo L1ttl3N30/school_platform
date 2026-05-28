@@ -1,0 +1,28 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    Upload Bank Statement
+</h2>
+
+<form
+    method="post"
+    enctype="multipart/form-data"
+    class="card p-4"
+>
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button
+        type="submit"
+        class="btn btn-primary"
+    >
+        Reconcile Payments
+    </button>
+
+</form>
+
+{% endblock %}

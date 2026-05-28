@@ -1,6 +1,8 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+from decouple import config
+from decimal import Decimal
 
 load_dotenv()
 
@@ -11,7 +13,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = []
-
+DEFAULT_LESSON_FEE = Decimal(
+    config(
+        "DEFAULT_LESSON_FEE",
+        default="50000"
+    )
+)
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -111,3 +118,10 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 LOGIN_URL = "/accounts/login/"
+
+BANK_NAME = "Vietcombank"
+BANK_BIN = "970436"
+BANK_ACCOUNT_NUMBER = "0211000478164"
+
+BANK_ACCOUNT_NAME = "NGUYEN SY THANG"
+

@@ -1,59 +1,48 @@
-import calendar
+from calendar import monthrange
 from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import (
     get_object_or_404,
     redirect,
     render,
 )
 
+from apps.accounts.models import User
 from apps.classes.models import (
     Enrollment,
     SchoolClass,
 )
-from apps.core.mixins import (
-    TeacherRequiredMixin,
-)
-
-from .models import (
-    AttendanceRecord,
-    AttendanceStatus,
-)
-from .services import AttendanceService
-from calendar import monthrange
-from datetime import datetime
-
-from apps.payments.services import (
-    PaymentService,
+from apps.core.decorators import (
+    role_required,
 )
 from apps.payments.qr_service import (
     QRCodeService,
 )
-from apps.core.decorators import (
-    role_required,
+from apps.payments.services import (
+    PaymentService,
 )
 
-from django.core.paginator import (
-    Paginator,
-)
-from django.utils import timezone
-from .models import (
-    AttendanceRecord,
-    AttendanceStatus,
-)
 from .forms import (
     AttendanceImportForm,
 )
 from .import_service import (
     AttendanceImportService,
 )
+from .models import (
+    AttendanceRecord,
+    AttendanceStatus,
+)
+from .services import AttendanceService
+
 
 @login_required
 def attendance_dashboard(request):
 
     if request.user.role == "STUDENT":
+
         attendance_queryset = (
             AttendanceRecord.objects.filter(
                 student=request.user
@@ -75,8 +64,10 @@ def attendance_dashboard(request):
             "page"
         )
 
-        attendance_records = paginator.get_page(
-            page_number
+        attendance_records = (
+            paginator.get_page(
+                page_number
+            )
         )
 
         context = {
@@ -129,6 +120,9 @@ def class_attendance_view(
             is_active=True,
         )
         .select_related("student")
+        .order_by(
+            "student__full_name"
+        )
     )
 
     attendance_map = {}
@@ -140,8 +134,7 @@ def class_attendance_view(
                 student=enrollment.student,
                 school_class=school_class,
                 attendance_date=today,
-            )
-            .first()
+            ).first()
         )
 
         attendance_map[
@@ -156,15 +149,29 @@ def class_attendance_view(
                 f"status_{enrollment.student.id}"
             )
 
-            if status:
+            if not status:
+                continue
 
-                AttendanceService.mark_attendance(
+            AttendanceService.mark_attendance(
+                student=enrollment.student,
+                school_class=school_class,
+                attendance_date=today,
+                status=status,
+                marked_by=request.user,
+            )
+
+            payment, _ = (
+                PaymentService.get_or_create_payment(
                     student=enrollment.student,
                     school_class=school_class,
-                    attendance_date=today,
-                    status=status,
-                    marked_by=request.user,
+                    month=today.month,
+                    year=today.year,
                 )
+            )
+
+            PaymentService.recalculate_payment_amount(
+                payment=payment
+            )
 
         messages.success(
             request,
@@ -191,7 +198,6 @@ def class_attendance_view(
     )
 
 
-
 @login_required
 @role_required([
     "ADMIN",
@@ -206,6 +212,32 @@ def monthly_attendance_grid(
         SchoolClass,
         id=class_id,
     )
+    if request.method == "POST":
+
+        new_fee = request.POST.get(
+            "lesson_fee"
+        )
+
+        if new_fee:
+
+            school_class.lesson_fee = new_fee
+
+            school_class.save(
+                update_fields=[
+                    "lesson_fee",
+                    "updated_at",
+                ]
+            )
+
+            messages.success(
+                request,
+                "Class lesson fee updated."
+            )
+
+            return redirect(
+                "monthly_attendance_grid",
+                class_id=school_class.id,
+            )
 
     month = int(
         request.GET.get(
@@ -236,6 +268,9 @@ def monthly_attendance_grid(
             is_active=True,
         )
         .select_related("student")
+        .order_by(
+            "student__full_name"
+        )
     )
 
     student_rows = []
@@ -243,6 +278,19 @@ def monthly_attendance_grid(
     for enrollment in enrollments:
 
         student = enrollment.student
+
+        if not student.reference_number:
+
+            messages.warning(
+                request,
+                (
+                    f"{student.full_name} "
+                    f"does not have a "
+                    f"reference number."
+                ),
+            )
+
+            continue
 
         attendance_records = (
             AttendanceRecord.objects.filter(
@@ -261,11 +309,11 @@ def monthly_attendance_grid(
 
         total_present = (
             attendance_records.filter(
-                status="PRESENT"
+                status=AttendanceStatus.PRESENT
             ).count()
         )
 
-        payment = (
+        payment, _ = (
             PaymentService.get_or_create_payment(
                 student=student,
                 school_class=school_class,
@@ -274,13 +322,17 @@ def monthly_attendance_grid(
             )
         )
 
-        qr_data = (
-            payment.payment_reference
+        payment = (
+            PaymentService.recalculate_payment_amount(
+                payment=payment
+            )
         )
 
+        payment.refresh_from_db()
+
         qr_code = (
-            QRCodeService.generate_base64_qr(
-                qr_data
+            QRCodeService.generate_vietqr_url(
+                payment=payment
             )
         )
 
@@ -306,6 +358,7 @@ def monthly_attendance_grid(
         context,
     )
 
+
 @login_required
 @role_required([
     "ADMIN",
@@ -325,6 +378,11 @@ def toggle_attendance(
         id=class_id,
     )
 
+    student = get_object_or_404(
+        User,
+        id=student_id,
+    )
+
     attendance_date = date(
         year,
         month,
@@ -333,7 +391,7 @@ def toggle_attendance(
 
     attendance = (
         AttendanceRecord.objects.filter(
-            student_id=student_id,
+            student=student,
             school_class=school_class,
             attendance_date=attendance_date,
         ).first()
@@ -346,12 +404,25 @@ def toggle_attendance(
     else:
 
         AttendanceRecord.objects.create(
-            student_id=student_id,
+            student=student,
             school_class=school_class,
             attendance_date=attendance_date,
             status=AttendanceStatus.PRESENT,
             marked_by=request.user,
         )
+
+    payment, _ = (
+        PaymentService.get_or_create_payment(
+            student=student,
+            school_class=school_class,
+            month=month,
+            year=year,
+        )
+    )
+
+    PaymentService.recalculate_payment_amount(
+        payment=payment
+    )
 
     return redirect(
         request.META.get(
@@ -359,6 +430,7 @@ def toggle_attendance(
             "/",
         )
     )
+
 
 @login_required
 @role_required([
@@ -394,6 +466,40 @@ def import_attendance_excel(request):
                 )
             )
 
+            students = (
+                User.objects.filter(
+                    role=User.Role.STUDENT,
+                    enrollments__school_class=form.cleaned_data[
+                        "school_class"
+                    ],
+                    enrollments__is_active=True,
+                ).distinct()
+            )
+
+            for student in students:
+
+                if not student.reference_number:
+                    continue
+
+                payment, _ = (
+                    PaymentService.get_or_create_payment(
+                        student=student,
+                        school_class=form.cleaned_data[
+                            "school_class"
+                        ],
+                        month=form.cleaned_data[
+                            "month"
+                        ],
+                        year=form.cleaned_data[
+                            "year"
+                        ],
+                    )
+                )
+
+                PaymentService.recalculate_payment_amount(
+                    payment=payment
+                )
+
             messages.success(
                 request,
                 (
@@ -404,6 +510,16 @@ def import_attendance_excel(request):
                     f"{result['skipped_count']} students."
                 ),
             )
+
+            for issue in result.get(
+                "unmatched_students",
+                [],
+            ):
+
+                messages.warning(
+                    request,
+                    issue,
+                )
 
             return redirect(
                 "import_attendance_excel"

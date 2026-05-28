@@ -20,3 +20,10 @@ class PaymentImportForm(forms.ModelForm):
                 }
             )
         }
+
+
+# class BankStatementUploadForm(
+#     forms.Form,
+# ):
+
+#     file = forms.FileField()

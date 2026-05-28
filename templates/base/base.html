@@ -75,23 +75,34 @@
             <a href="/attendance/">
                 Attendance
             </a>
+
+            {% if request.user.role == "ADMIN" or request.user.role == "TEACHER" %}
             <a href="/attendance/import/">
                 Import Attendance
             </a>
             <a href="/accounts/import-students/">
                 Import Students
             </a>
+            {% endif %}
+
             <a href="/rankings/">
                 Rankings
             </a>
 
             {% if request.user.role == "ADMIN" or request.user.role == "TEACHER" %}
 
-                <a href="/payments/upload/">
+                <div class="text-uppercase text-secondary small mt-3 mb-2 px-2">
                     Payments
+                </div>
+                <a href="/payments/">
+                    Payments Dashboard
+                </a>
+                <a href="/payments/upload/">
+                    Upload Payments
                 </a>
 
-            {% endif %}
+                {% endif %}
+
 
             {% if request.user.is_superuser %}
 
